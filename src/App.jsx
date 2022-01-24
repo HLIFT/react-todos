@@ -18,7 +18,7 @@ export const App = () => {
         return labels.filter(item => item.id === id)
     }
 
-    const [todos, setTodos] = useState([])
+    const [todos, setTodos] = useState({})
     const [newTodo, setNewTodo] = useState(getFreshTodo)
     const [countIdTodos, setCountIdTodos] = useState(1)
     const labels = [
@@ -28,8 +28,7 @@ export const App = () => {
     ]
     const [filter, setFilter] = useState('all')
 
-    const remaining = todos.filter(item => !item.completed).length
-    const done = todos.filter(item => item.completed).length
+    const remaining = Object.values(todos).filter(item => !item.completed).length
 
     const [inEdition, setInEdition] = useState(false)
     const [search, setSearch] = useState('')
@@ -51,22 +50,20 @@ export const App = () => {
     const handleOnSubmit = (event) => {
         event.preventDefault()
         if (newTodo.id !== null) {
-            setTodos(todos.map(todo => {
-                if (todo.id === newTodo.id) {
-                    return newTodo
-                } else {
-                    return todo
-                }
-            }))
+            setTodos(currentTodos => {
+                return { ...currentTodos, [newTodo.id]: { ...newTodo } }
+            })
         } else {
-            setTodos([...todos, {
-                "id": countIdTodos,
-                "title": newTodo.title,
-                "description": newTodo.description,
-                "labelId": newTodo.labelId,
-                "dueDate": newTodo.dueDate,
-                "completed": false
-            }])
+            setTodos({
+                ...todos, [countIdTodos]: {
+                    "id": countIdTodos,
+                    "title": newTodo.title,
+                    "description": newTodo.description,
+                    "labelId": newTodo.labelId,
+                    "dueDate": newTodo.dueDate,
+                    "completed": false
+                }
+            })
             setCountIdTodos(oldCount => oldCount + 1)
         }
         setNewTodo(getFreshTodo)
@@ -74,20 +71,25 @@ export const App = () => {
     }
 
     const handleClickOnCompleted = todo => {
-        setTodos(todos.map(item => {
-            if (item === todo) {
-                item.completed = !item.completed;
-            }
-            return item
-        }))
+
+        setTodos(currentTodos => {
+            return { ...currentTodos, [todo.id]: { ...todo, completed: !todo.completed } }
+        })
     }
 
     const handleClickOnDelete = deleteTodo => {
-        setTodos(todos.filter(item => item !== deleteTodo))
+        setTodos(currentTodos => {
+            delete currentTodos[deleteTodo.id]
+            return { ...currentTodos }
+        })
     }
 
     const handleClickOnDeleteDone = () => {
-        setTodos(todos.filter(item => !item.completed))
+        setTodos(currentTodos => {
+            return Object.fromEntries(Object.entries(currentTodos).filter(([id, todo]) => {
+                return !todo.completed
+            }))
+        })
     }
 
     const handleClickOnFilter = (event) => {
@@ -96,16 +98,20 @@ export const App = () => {
     }
 
     const markAllAsRead = () => {
-        if (todos.filter(item => !item.completed).length > 0) {
-            setTodos(todos.map(item => {
-                item.completed = true
-                return item
-            }))
+        if (Object.entries(todos).filter(([id, todo]) => !todo.completed).length > 0) {
+            setTodos(currentTodos => {
+                return Object.fromEntries(Object.entries(currentTodos).map(todo => {
+                    todo[1].completed = true
+                    return todo
+                }))
+            })
         } else {
-            setTodos(todos.map(item => {
-                item.completed = false
-                return item
-            }))
+            setTodos(currentTodos => {
+                return Object.fromEntries(Object.entries(currentTodos).map(todo => {
+                    todo[1].completed = false
+                    return todo
+                }))
+            })
         }
 
     }
@@ -140,7 +146,7 @@ export const App = () => {
                 <ul className="todo-list">
                     {
                         filter !== 'date' ?
-                            todos.filter(item => {
+                            Object.values(todos).filter(item => {
                                 switch (filter) {
                                     case 'todo' :
                                         return !item.completed
@@ -162,7 +168,7 @@ export const App = () => {
                                 return <Todo key={todo.id} todo={todo} handleClickOnCompleted={handleClickOnCompleted}
                                              handleClickOnDelete={handleClickOnDelete} getLabel={getLabel}
                                              handleClickOnEdit={handleOnEdit}/>
-                            }) : todos.filter(item => {
+                            }) : Object.values(todos).filter(item => {
                                 return item.dueDate !== ''
                             }).sort((a, b) => {
                                 return new Date(a.dueDate) - new Date(b.dueDate)
