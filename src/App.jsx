@@ -21,20 +21,24 @@ export const App = () => {
     const [todos, setTodos] = useState([])
     const [newTodo, setNewTodo] = useState(getFreshTodo)
     const [countIdTodos, setCountIdTodos] = useState(1)
-    const labels = [{ id: 0, title: "non classé", name: 'nc' }, { id: 1, title: "dev front", name: 'df' }, { id: 2, title: "dev back", name: 'db' }]
+    const labels = [
+        { id: 0, title: "non classé", name: 'nc' },
+        { id: 1, title: "dev front", name: 'df' },
+        { id: 2, title: "dev back", name: 'db' }
+    ]
     const [filter, setFilter] = useState('all')
 
     const remaining = todos.filter(item => !item.completed).length
     const done = todos.filter(item => item.completed).length
 
     const [inEdition, setInEdition] = useState(false)
+    const [search, setSearch] = useState('')
 
     const handleOnChangeInputs = (event) => {
         setNewTodo({ ...newTodo, [event.target.name]: event.target.value })
     }
 
     const handleOnEdit = todo => {
-        console.log('test')
         setInEdition(true)
         setNewTodo(todo)
     }
@@ -46,13 +50,14 @@ export const App = () => {
 
     const handleOnSubmit = (event) => {
         event.preventDefault()
-        if(newTodo.id !== null) {
-            let todo = todos.filter(item => item.id === newTodo.id)[0];
-            todo.title = newTodo.title
-            todo.description = newTodo.description
-            todo.labelId = newTodo.labelId
-            todo.dueDate = newTodo.dueDate
-            todo.completed = newTodo.completed
+        if (newTodo.id !== null) {
+            setTodos(todos.map(todo => {
+                if (todo.id === newTodo.id) {
+                    return newTodo
+                } else {
+                    return todo
+                }
+            }))
         } else {
             setTodos([...todos, {
                 "id": countIdTodos,
@@ -125,7 +130,8 @@ export const App = () => {
                            onChange={handleOnChangeInputs}/>
                     <button type="submit"/>
                 </form>
-                { inEdition === true ? <button className="edit" onClick={exitEdition}>Annuler la modification</button> : '' }
+                {inEdition === true ?
+                    <button className="edit" onClick={exitEdition}>Annuler la modification</button> : ''}
 
             </header>
             <div className="main">
@@ -140,34 +146,30 @@ export const App = () => {
                                         return !item.completed
                                     case 'done' :
                                         return item.completed
-                                    case 'nc' :
-                                        return item.labelId === '0'
-                                    case 'df' :
-                                        return item.labelId === '1'
-                                    case 'db' :
-                                        return item.labelId === '2'
                                     case 'all' :
                                         return item
+                                    case 'search':
+                                        return item.title.includes(search) || item.description.includes(search)
                                     default :
-                                        const labelsMatch = labels.filter(label => label.name === filter)
-                                        if(labelsMatch.length > 0) {
-                                            return item.labelId === labelsMatch[0].id
+                                        const label = labels.find(label => label.name === filter)
+                                        if (label !== undefined) {
+                                            return item.labelId.toString() === label.id.toString()
                                         } else {
                                             return item
                                         }
                                 }
                             }).map(todo => {
-                                console.log(todo.labelId)
                                 return <Todo key={todo.id} todo={todo} handleClickOnCompleted={handleClickOnCompleted}
-                                             handleClickOnDelete={handleClickOnDelete} getLabel={getLabel} handleClickOnEdit={handleOnEdit}/>
+                                             handleClickOnDelete={handleClickOnDelete} getLabel={getLabel}
+                                             handleClickOnEdit={handleOnEdit}/>
                             }) : todos.filter(item => {
-                                console.log(item.dueDate)
                                 return item.dueDate !== ''
                             }).sort((a, b) => {
                                 return new Date(a.dueDate) - new Date(b.dueDate)
                             }).map(todo => {
                                 return <Todo key={todo.id} todo={todo} handleClickOnCompleted={handleClickOnCompleted}
-                                             handleClickOnDelete={handleClickOnDelete} getLabel={getLabel} handleClickOnEdit={handleOnEdit}/>
+                                             handleClickOnDelete={handleClickOnDelete} getLabel={getLabel}
+                                             handleClickOnEdit={handleOnEdit}/>
                             })
                     }
                 </ul>
@@ -187,11 +189,20 @@ export const App = () => {
                             text={"Date croissante"}/>
                     {
                         labels.map(el => {
-                            return <Filter key={el.id} name={el.name} filter={filter} handleClickOnFilter={handleClickOnFilter}
+                            return <Filter key={el.id} name={el.name} filter={filter}
+                                           handleClickOnFilter={handleClickOnFilter}
                                            text={el.title}/>
                         })
                     }
                 </ul>
+                <br/>
+                <form onSubmit={event => event.preventDefault()}>
+                    <input className="new-todo" name={'search'} type={'text'} placeholder={'Rechercher'} value={search}
+                           onChange={event => {
+                               setSearch(event.target.value)
+                               setFilter('search')
+                           }} style={{ marginTop: 17 }}/>
+                </form>
             </footer>
         </div>
     )
