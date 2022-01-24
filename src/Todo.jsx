@@ -2,12 +2,12 @@ export const Todo = ({ todo, handleClickOnCompleted, handleClickOnDelete, handle
     const label = getLabel(parseInt(todo.labelId))[0]
 
     return (
-        <li key={todo.id} className={todo.completed ? "todo completed" : "todo"} onClick={() => handleClickOnEdit(todo)}>
+        <li key={todo.id} className={todo.completed ? "todo completed" : "todo"}>
             <div className="view" style={{display:'flex'}}>
                 <div>
                     <input type="checkbox" className="toggle" checked={todo.completed} readOnly={false}
                            onClick={() => handleClickOnCompleted(todo)}/>
-                    <label>
+                    <label onClick={() => handleClickOnEdit(todo)}>
                         {todo.title}
                         <br/>
                         <span style={{fontSize:18}}>{todo.description}</span>

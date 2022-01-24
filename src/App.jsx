@@ -147,8 +147,14 @@ export const App = () => {
                                     case 'db' :
                                         return item.labelId === '2'
                                     case 'all' :
-                                    default :
                                         return item
+                                    default :
+                                        const labelsMatch = labels.filter(label => label.name === filter)
+                                        if(labelsMatch.length > 0) {
+                                            return item.labelId === labelsMatch[0].id
+                                        } else {
+                                            return item
+                                        }
                                 }
                             }).map(todo => {
                                 console.log(todo.labelId)
