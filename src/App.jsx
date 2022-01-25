@@ -1,5 +1,5 @@
 import './todo.css'
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Todo } from "./Todo";
 import { Filter } from "./Filter";
 
@@ -14,24 +14,37 @@ export const App = () => {
         completed: false
     })
 
-    const getLabel = (id) => {
-        return labels.filter(item => item.id === id)
-    }
-
     const [todos, setTodos] = useState({})
     const [newTodo, setNewTodo] = useState(getFreshTodo)
-    const [countIdTodos, setCountIdTodos] = useState(1)
+
+    useEffect(() => {
+        if (localStorage.getItem('todos')) {
+            setTodos(JSON.parse(localStorage.getItem('todos')))
+        }
+    }, [])
+
+    useEffect(() => {
+        localStorage.setItem('todos', JSON.stringify(todos));
+    }, [todos])
+
+    const remaining = Object.values(todos).filter(item => !item.completed).length
+
     const labels = [
         { id: 0, title: "non classé", name: 'nc' },
         { id: 1, title: "dev front", name: 'df' },
         { id: 2, title: "dev back", name: 'db' }
     ]
-    const [filter, setFilter] = useState('all')
 
-    const remaining = Object.values(todos).filter(item => !item.completed).length
+    const getLabel = (id) => {
+        return labels.filter(item => item.id === id)
+    }
+
+    const [filter, setFilter] = useState('all')
 
     const [inEdition, setInEdition] = useState(false)
     const [search, setSearch] = useState('')
+
+    const [errors, setErrors] = useState({})
 
     const handleOnChangeInputs = (event) => {
         setNewTodo({ ...newTodo, [event.target.name]: event.target.value })
@@ -49,29 +62,31 @@ export const App = () => {
 
     const handleOnSubmit = (event) => {
         event.preventDefault()
-        if (newTodo.id !== null) {
-            setTodos(currentTodos => {
-                return { ...currentTodos, [newTodo.id]: { ...newTodo } }
-            })
-        } else {
-            setTodos({
-                ...todos, [countIdTodos]: {
-                    "id": countIdTodos,
-                    "title": newTodo.title,
-                    "description": newTodo.description,
-                    "labelId": newTodo.labelId,
-                    "dueDate": newTodo.dueDate,
-                    "completed": false
-                }
-            })
-            setCountIdTodos(oldCount => oldCount + 1)
+
+        const errors = {
+            title: newTodo.title ? undefined : 'Le titre est obligatoire',
+            description: newTodo.description ? undefined : 'La description est obligatoire',
+        };
+
+        setErrors(errors)
+
+        const hasErrors = Object.values(errors).some(Boolean)
+
+        if (hasErrors) {
+            return;
         }
+
+        setTodos(currentTodos => {
+            const hasTodos = Object.keys(currentTodos).length
+            const id = newTodo.id ?? (hasTodos ? Math.max(...Object.keys(currentTodos)) : 0) + 1
+            return { ...currentTodos, [id]: { ...newTodo, id } }
+        })
+
         setNewTodo(getFreshTodo)
         setInEdition(false)
     }
 
     const handleClickOnCompleted = todo => {
-
         setTodos(currentTodos => {
             return { ...currentTodos, [todo.id]: { ...todo, completed: !todo.completed } }
         })
@@ -98,22 +113,17 @@ export const App = () => {
     }
 
     const markAllAsRead = () => {
-        if (Object.entries(todos).filter(([id, todo]) => !todo.completed).length > 0) {
-            setTodos(currentTodos => {
-                return Object.fromEntries(Object.entries(currentTodos).map(todo => {
-                    todo[1].completed = true
-                    return todo
-                }))
-            })
-        } else {
-            setTodos(currentTodos => {
-                return Object.fromEntries(Object.entries(currentTodos).map(todo => {
-                    todo[1].completed = false
-                    return todo
-                }))
-            })
-        }
+        setTodos(currentTodos => {
+            const currentTodosEntries = Object.entries(currentTodos)
+            const hasNotCompletedTodo = Boolean(currentTodosEntries.filter(([id, todo]) => !todo.completed).length);
 
+            return Object.fromEntries(currentTodosEntries.map(([id, todo]) => {
+                return [id, {
+                    ...todo,
+                    completed: hasNotCompletedTodo
+                }];
+            }))
+        })
     }
 
     return (
@@ -123,8 +133,10 @@ export const App = () => {
                 <form onSubmit={handleOnSubmit}>
                     <input name="title" type="text" className="new-todo" placeholder="Ajouter une tâche"
                            value={newTodo.title} onChange={handleOnChangeInputs}/>
+                    {errors.title && <span className='error-required'>{errors.title}</span>}
                     <input name="description" type="textarea" className="new-todo" placeholder="Description"
                            value={newTodo.description} onChange={handleOnChangeInputs}/>
+                    {errors.description && <span className='error-required'>{errors.description}</span>}
                     <select name="labelId" id="select-label" className="new-todo" onChange={handleOnChangeInputs}
                             value={newTodo.labelId}>
                         <option value={0} disabled={true}>Définir un label</option>
@@ -158,7 +170,7 @@ export const App = () => {
                                         return item.title.includes(search) || item.description.includes(search)
                                     default :
                                         const label = labels.find(label => label.name === filter)
-                                        if (label !== undefined) {
+                                        if (label) {
                                             return item.labelId.toString() === label.id.toString()
                                         } else {
                                             return item
@@ -168,8 +180,12 @@ export const App = () => {
                                 return <Todo key={todo.id} todo={todo} handleClickOnCompleted={handleClickOnCompleted}
                                              handleClickOnDelete={handleClickOnDelete} getLabel={getLabel}
                                              handleClickOnEdit={handleOnEdit}/>
-                            }) : Object.values(todos).filter(item => {
-                                return item.dueDate !== ''
+                            }) : Object.values(todos).sort((a, b) => {
+                                if((a.dueDate && b.dueDate) || (a.dueDate && !b.dueDate)) {
+                                    return -1
+                                } else {
+                                    return 1
+                                }
                             }).sort((a, b) => {
                                 return new Date(a.dueDate) - new Date(b.dueDate)
                             }).map(todo => {
@@ -183,15 +199,15 @@ export const App = () => {
             <footer className="footer">
                 <span className="todo-count"><strong>{remaining}</strong> tâches à faire</span>
                 <ul className="filters">
-                    <Filter name={"all"} filter={filter} handleClickOnFilter={handleClickOnFilter} text={"Toutes"}/>
-                    <Filter name={"todo"} filter={filter} handleClickOnFilter={handleClickOnFilter} text={"À faire"}/>
-                    <Filter name={"done"} filter={filter} handleClickOnFilter={handleClickOnFilter} text={"Faites"}/>
+                    <Filter key={"all"} name={"all"} filter={filter} handleClickOnFilter={handleClickOnFilter} text={"Toutes"}/>
+                    <Filter key={"todo"} name={"todo"} filter={filter} handleClickOnFilter={handleClickOnFilter} text={"À faire"}/>
+                    <Filter key={"done"} name={"done"} filter={filter} handleClickOnFilter={handleClickOnFilter} text={"Faites"}/>
                 </ul>
                 <button className="clear-completed" onClick={handleClickOnDeleteDone}> Supprimer tâches terminées
                 </button>
                 <br/>
                 <ul className={'filters'} style={{ marginTop: 8 }}>
-                    <Filter name={"date"} filter={filter} handleClickOnFilter={handleClickOnFilter}
+                    <Filter key={"date"} name={"date"} filter={filter} handleClickOnFilter={handleClickOnFilter}
                             text={"Date croissante"}/>
                     {
                         labels.map(el => {
