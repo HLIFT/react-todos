@@ -22,7 +22,7 @@ module.exports = {
     'import/prefer-default-export': ['off'],
     'import/no-default-export': ['error'],
     'react/react-in-jsx-scope': ['off'],
-    // 'react/prop-types': ['off'],
+    'react/prop-types': ['off'],
   },
   overrides: [
     {
