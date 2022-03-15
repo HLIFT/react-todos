@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model todos {
+  id          Int       @id @default(autoincrement())
+  title       String    @db.VarChar(255)
+  description String?   @db.LongText
+  label_id    Int?
+  due_date    DateTime? @db.Timestamp(0)
+  completed   Boolean   @default(false)
+  labels      labels?   @relation(fields: [label_id], references: [id], onUpdate: NoAction, map: "todos_labels_id_fk")
+
+  @@index([label_id], map: "todos_labels_id_fk")
+}
+
+model labels {
+  id    Int     @id @default(autoincrement())
+  name  String  @db.VarChar(255)
+  color String  @db.VarChar(255)
+  todos todos[]
+}

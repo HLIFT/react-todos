@@ -7,7 +7,7 @@ export function Filter({
       <a
         href="#"
         name={name}
-        className={filter === name ? 'selected' : ''}
+        className={filter === name.toString() ? 'selected' : ''}
         onClick={handleClickOnFilter}
       >
         {text}

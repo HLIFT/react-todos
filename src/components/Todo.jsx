@@ -7,7 +7,7 @@ export function Todo({
   handleClickOnEdit,
   getLabel,
 }) {
-  const label = getLabel(parseInt(todo.labelId, 10))[0];
+  const label = todo.labelId ? getLabel(parseInt(todo.labelId, 10))[0] : null;
 
   return (
     <li key={todo.id} className={todo.completed ? 'todo completed' : 'todo'}>
@@ -22,11 +22,13 @@ export function Todo({
           />
           <label onClick={() => handleClickOnEdit(todo)}>
             {todo.title}
-            <br />
-            <span style={{ fontSize: 18 }}>{todo.description}</span>
-            <br />
-            <span className="label">{label?.title}</span>
-            <br />
+            {todo.description && todo.description !== '' ?
+              <div><span style={{ fontSize: 18 }}>{todo.description}</span></div> : null}
+            {label ? <div><span className="label"
+                                style={{ backgroundColor: label ? label.color : "gray" }}>{label?.name}</span>
+            </div> : <div><span className="label"
+                                style={{ backgroundColor: "lightgrey" }}>Non classé</span>
+            </div>}
             <span
               style={{
                 fontSize: 20,
@@ -48,7 +50,7 @@ export function Todo({
           />
         </div>
       </div>
-      <input type="text" className="edit" />
+      <input type="text" className="edit"/>
     </li>
   );
 }

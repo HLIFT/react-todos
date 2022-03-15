@@ -1,43 +1,44 @@
 // eslint-disable-next-line max-len
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions,jsx-a11y/click-events-have-key-events,jsx-a11y/label-has-associated-control,no-unused-vars */
 
-import './todo.css';
+import '../assets/style/todo.css';
 import { useEffect, useState } from 'react';
 import { Todo } from './Todo';
 import { Filter } from './Filter';
+import { updateTodo, deleteTodo, createTodo, getTodos, completeTodo, getLabels } from "../helpers/api";
 
 export function App() {
+
   const getFreshTodo = () => ({
     id: null,
     title: '',
     description: '',
-    labelId: 0,
+    labelId: '',
     dueDate: '',
     completed: false,
   });
 
   const [todos, setTodos] = useState({});
   const [newTodo, setNewTodo] = useState(getFreshTodo);
+  const [labels, setLabels] = useState([]);
 
   useEffect(() => {
-    if (localStorage.getItem('todos')) {
-      setTodos(JSON.parse(localStorage.getItem('todos')));
-    }
+    getTodos().then(response => {
+      if (response.success) {
+        setTodos(response.todos)
+      }
+    })
+
+    getLabels().then(response => {
+      if (response.success) {
+        setLabels(response.labels)
+      }
+    })
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem('todos', JSON.stringify(todos));
-  }, [todos]);
 
   const remaining = Object.values(todos).filter(
     (item) => !item.completed,
   ).length;
-
-  const labels = [
-    { id: 0, title: 'non classé', name: 'nc' },
-    { id: 1, title: 'dev front', name: 'df' },
-    { id: 2, title: 'dev back', name: 'db' },
-  ];
 
   const getLabel = (id) => labels.filter((item) => item.id === id);
 
@@ -66,50 +67,71 @@ export function App() {
     event.preventDefault();
 
     const errorsSubmit = {
-      title: newTodo.title ? undefined : 'Le titre est obligatoire',
-      description: newTodo.description
-        ? undefined
-        : 'La description est obligatoire',
+      title: newTodo.title !== '' ? undefined : 'Le titre est obligatoire'
     };
 
     setErrors(errorsSubmit);
 
-    const hasErrors = Object.values(errors).some(Boolean);
-
-    if (hasErrors) {
+    if (errorsSubmit.title !== undefined) {
       return;
     }
 
-    setTodos((currentTodos) => {
-      const hasTodos = Object.keys(currentTodos).length;
-      const id = newTodo.id
-        ?? (hasTodos ? Math.max(...Object.keys(currentTodos)) : 0) + 1;
-      return { ...currentTodos, [id]: { ...newTodo, id } };
-    });
-
-    setNewTodo(getFreshTodo);
-    setInEdition(false);
+    if (newTodo.id) {
+      updateTodo(newTodo).then(response => {
+        if (response.success) {
+          setTodos((currentTodos) => ({
+            ...currentTodos,
+            [response.todo.id]: response.todo
+          }))
+          setNewTodo(getFreshTodo);
+          setInEdition(false);
+        }
+      })
+    } else {
+      createTodo(newTodo).then(response => {
+        if (response.success) {
+          setTodos((currentTodos) => ({
+            ...currentTodos,
+            [response.todo.id]: response.todo
+          }))
+          setNewTodo(getFreshTodo);
+          setInEdition(false);
+        }
+      })
+    }
   };
 
   const handleClickOnCompleted = (todo) => {
-    setTodos((currentTodos) => ({
-      ...currentTodos,
-      [todo.id]: { ...todo, completed: !todo.completed },
-    }));
+    completeTodo(todo).then(response => {
+      if (response.success) {
+        setTodos((currentTodos) => ({
+          ...currentTodos,
+          [response.todo.id]: response.todo,
+        }));
+      }
+    })
   };
 
-  const handleClickOnDelete = (deleteTodo) => {
-    setTodos((currentTodos) => {
-      // eslint-disable-next-line no-param-reassign
-      delete currentTodos[deleteTodo.id];
-      return { ...currentTodos };
-    });
+  const handleClickOnDelete = (todo) => {
+    deleteTodo(todo).then(response => {
+      console.log(response.success)
+      if (response.success) {
+        setTodos((currentTodos) => {
+          // eslint-disable-next-line no-param-reassign
+          delete currentTodos[todo.id];
+          return { ...currentTodos };
+        });
+      }
+    })
   };
 
   const handleClickOnDeleteDone = () => {
-    setTodos((currentTodos) => Object.fromEntries(
-      Object.entries(currentTodos).filter(([id, todo]) => !todo.completed),
-    ));
+    for (const id in todos) {
+      const todo = todos[id]
+      if (todo.completed) {
+        handleClickOnDelete(todo)
+      }
+    }
   };
 
   const handleClickOnFilter = (event) => {
@@ -118,22 +140,23 @@ export function App() {
   };
 
   const markAllAsRead = () => {
-    setTodos((currentTodos) => {
-      const currentTodosEntries = Object.entries(currentTodos);
-      const hasNotCompletedTodo = Boolean(
-        currentTodosEntries.filter(([id, todo]) => !todo.completed).length,
-      );
+    const currentTodosEntries = Object.entries(todos);
+    const hasNotCompletedTodo = Boolean(
+      currentTodosEntries.filter(([id, todo]) => !todo.completed).length,
+    );
 
-      return Object.fromEntries(
-        currentTodosEntries.map(([id, todo]) => [
-          id,
-          {
-            ...todo,
-            completed: hasNotCompletedTodo,
-          },
-        ]),
-      );
-    });
+    for (const id in todos) {
+      const todo = todos[id];
+      todo.completed = hasNotCompletedTodo
+      updateTodo(todo).then(response => {
+        if (response.success) {
+          setTodos((currentTodos) => ({
+            ...currentTodos,
+            [response.todo.id]: response.todo,
+          }));
+        }
+      })
+    }
   };
 
   return (
@@ -169,13 +192,14 @@ export function App() {
             className="new-todo"
             onChange={handleOnChangeInputs}
             value={newTodo.labelId}
+            placeholder="Label"
           >
-            <option value={0} disabled>
-              Définir un label
+            <option value={''}>
+              Non classé
             </option>
             {labels.map((label) => (
               <option key={label.id} value={label.id}>
-                {label.title}
+                {label.name}
               </option>
             ))}
           </select>
@@ -187,7 +211,7 @@ export function App() {
             onChange={handleOnChangeInputs}
           />
           {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
-          <button type="submit" />
+          <button type="submit"/>
         </form>
         {inEdition === true ? (
           <button type="button" className="edit" onClick={exitEdition}>
@@ -198,71 +222,74 @@ export function App() {
         )}
       </header>
       <div className="main">
-        <input id="toggle-all" type="checkbox" className="toggle-all" />
+        <input id="toggle-all" type="checkbox" className="toggle-all"/>
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events */}
         <label onClick={markAllAsRead}>Mark all as complete</label>
         <ul className="todo-list">
           {filter !== 'date'
             ? Object.values(todos)
-              .filter((item) => {
-                switch (filter) {
-                  case 'todo':
-                    return !item.completed;
-                  case 'done':
-                    return item.completed;
-                  case 'all':
-                    return item;
-                  case 'search':
-                    return (
-                      item.title.includes(search)
-                        || item.description.includes(search)
-                    );
-                  default:
-                    // eslint-disable-next-line no-case-declarations
-                    const label = labels.find(
-                      (element) => element.name === filter,
-                    );
-                    if (label) {
-                      return item.labelId.toString() === label.id.toString();
-                    }
-                    return item;
-                }
-              })
-              .map((todo) => (
-                <Todo
-                  key={todo.id}
-                  todo={todo}
-                  handleClickOnCompleted={handleClickOnCompleted}
-                  handleClickOnDelete={handleClickOnDelete}
-                  getLabel={getLabel}
-                  handleClickOnEdit={handleOnEdit}
-                />
-              ))
+            .filter((item) => {
+              switch (filter) {
+                case 'todo':
+                  return !item.completed;
+                case 'done':
+                  return item.completed;
+                case 'all':
+                  return item;
+                case 'search':
+                  return (
+                    item.title.includes(search)
+                    || item.description.includes(search)
+                  );
+                case 'noLabel':
+                  return !item.labelId;
+                default:
+                  // eslint-disable-next-line no-case-declarations
+                  const label = labels.find(
+                    (element) => element.id.toString() === filter,
+                  );
+                  if (label) {
+                    console.log(item)
+                    return item.labelId && item.labelId.toString() === label.id.toString();
+                  }
+                  return item;
+              }
+            })
+            .map((todo) => (
+              <Todo
+                key={todo.id}
+                todo={todo}
+                handleClickOnCompleted={handleClickOnCompleted}
+                handleClickOnDelete={handleClickOnDelete}
+                getLabel={getLabel}
+                handleClickOnEdit={handleOnEdit}
+              />
+            ))
             : Object.values(todos)
-              .sort((a, b) => {
-                if ((a.dueDate && b.dueDate) || (a.dueDate && !b.dueDate)) {
-                  return -1;
-                }
-                return 1;
-              })
-              .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
-              .map((todo) => (
-                <Todo
-                  key={todo.id}
-                  todo={todo}
-                  handleClickOnCompleted={handleClickOnCompleted}
-                  handleClickOnDelete={handleClickOnDelete}
-                  getLabel={getLabel}
-                  handleClickOnEdit={handleOnEdit}
-                />
-              ))}
+            .sort((a, b) => {
+              if ((a.dueDate && b.dueDate) || (a.dueDate && !b.dueDate)) {
+                return -1;
+              }
+              return 1;
+            })
+            .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+            .map((todo) => (
+              <Todo
+                key={todo.id}
+                todo={todo}
+                handleClickOnCompleted={handleClickOnCompleted}
+                handleClickOnDelete={handleClickOnDelete}
+                getLabel={getLabel}
+                handleClickOnEdit={handleOnEdit}
+              />
+            ))}
         </ul>
       </div>
       <footer className="footer">
         <span className="todo-count">
           <strong>{remaining}</strong>
           {' '}
-          tâches à faire
+          tâche(s) à faire
         </span>
         <ul className="filters">
           <Filter
@@ -291,7 +318,7 @@ export function App() {
           {' '}
           Supprimer tâches terminées
         </button>
-        <br />
+        <br/>
         <ul className="filters" style={{ marginTop: 8 }}>
           <Filter
             key="date"
@@ -300,17 +327,24 @@ export function App() {
             handleClickOnFilter={handleClickOnFilter}
             text="Date croissante"
           />
+          <Filter
+            key="noLabel"
+            name="noLabel"
+            filter={filter}
+            handleClickOnFilter={handleClickOnFilter}
+            text="Non classé"
+          />
           {labels.map((el) => (
             <Filter
               key={el.id}
-              name={el.name}
+              name={el.id}
               filter={filter}
               handleClickOnFilter={handleClickOnFilter}
-              text={el.title}
+              text={el.name}
             />
           ))}
         </ul>
-        <br />
+        <br/>
         <form onSubmit={(event) => event.preventDefault()}>
           <input
             className="new-todo"
