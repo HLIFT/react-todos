@@ -63,6 +63,12 @@ async function getAllLabels() {
   return labels;
 }
 
+function sleep(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
 const dataMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const { body } = req;
 
@@ -92,6 +98,8 @@ app.get('/api/todos', async (req: Request, res: Response) => {
     success: true,
     todos,
   };
+
+  await sleep(5000);
 
   res.status(200).json(result);
 });

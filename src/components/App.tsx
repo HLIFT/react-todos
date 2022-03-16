@@ -32,19 +32,17 @@ export function App() {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    getTodos().then((response) => {
-      if (response.success) {
-        setTodos(response.todos);
+    Promise.all([getTodos(), getLabels()]).then(([responseTodos, responseLabels]) => {
+      if (responseTodos.success) {
+        setTodos(responseTodos.todos);
       }
-    });
 
-    getLabels().then((response) => {
-      if (response.success) {
-        setLabels(response.labels);
+      if (responseLabels.success) {
+        setLabels(responseLabels.labels);
       }
-    });
 
-    setTimeout(() => setLoading(false), 2000);
+      setLoading(false);
+    });
   }, []);
 
   const remaining = Object.values(todos).filter(
@@ -270,7 +268,7 @@ export function App() {
                     case 'search':
                       return (
                         item.title.includes(search)
-                            || (item.description ? item.description.includes(search) : null)
+                        || (item.description ? item.description.includes(search) : null)
                       );
                     case 'noLabel':
                       return !item.labelId;
@@ -316,7 +314,7 @@ export function App() {
                   />
                 ))}
           </ul>
-        ) }
+        )}
 
       </div>
       <footer className="footer">
