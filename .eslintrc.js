@@ -6,7 +6,9 @@ module.exports = {
   extends: [
     'plugin:react/recommended',
     'airbnb',
+    'plugin:@typescript-eslint/recommended',
   ],
+  parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaFeatures: {
       jsx: true,
@@ -16,13 +18,17 @@ module.exports = {
   },
   plugins: [
     'react',
+    '@typescript-eslint',
   ],
   rules: {
     'import/no-unresolved': ['off'],
     'import/prefer-default-export': ['off'],
     'import/no-default-export': ['error'],
     'react/react-in-jsx-scope': ['off'],
+    'react/jsx-filename-extension': ['off'],
     'react/prop-types': ['off'],
+    'no-console': ['off'],
+    'import/extensions': ['off'],
   },
   overrides: [
     {

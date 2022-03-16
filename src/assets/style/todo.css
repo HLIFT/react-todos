@@ -314,17 +314,39 @@ body {
     border-color: rgba(175, 47, 47, 0.2);
 }
 
-.clear-completed,
-html .clear-completed:active {
+.filters li button {
+    color: inherit;
+    margin: 3px;
+    padding: 3px 7px;
+    text-decoration: none;
+    border: 1px solid transparent;
+    border-radius: 3px;
+}
+
+.filters li button:hover {
+    border-color: rgba(175, 47, 47, 0.1);
+    cursor: pointer;
+}
+
+.filters li button.selected {
+    border-color: rgba(175, 47, 47, 0.2);
+}
+
+.clear-completed {
     float: right;
     position: relative;
-    line-height: 20px;
+    color: inherit;
+    margin: 3px;
+    padding: 3px 0;
     text-decoration: none;
+    border: 1px solid transparent;
+    border-radius: 3px;
     cursor: pointer;
 }
 
 .clear-completed:hover {
     text-decoration: underline;
+    color: rgb(231, 66, 66);
 }
 
 .info {
