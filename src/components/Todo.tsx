@@ -34,8 +34,8 @@ export function Todo({
             onClick={() => handleClickOnCompleted(todo)}
           />
           {/* eslint-disable-next-line max-len */}
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-noninteractive-element-interactions */}
-          <label onClick={() => handleClickOnEdit(todo)} htmlFor={`checkbox-${todo.id}`}>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-noninteractive-element-interactions,jsx-a11y/label-has-associated-control */}
+          <label onClick={() => handleClickOnEdit(todo)}>
             {todo.title}
             {todo.description && todo.description !== ''
               ? <div><span style={{ fontSize: 18 }}>{todo.description}</span></div> : null}

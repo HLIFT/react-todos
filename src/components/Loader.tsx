@@ -1,22 +1,14 @@
 export function Loader() {
   return (
     <div className="loader-container">
-      <div className="loader">
-        <svg viewBox="0 0 80 80">
-          <circle id="test" cx="40" cy="40" r="32" />
-        </svg>
-      </div>
-
-      <div className="loader triangle">
-        <svg viewBox="0 0 86 80">
-          <polygon points="43 8 79 72 7 72" />
-        </svg>
-      </div>
-
-      <div className="loader">
-        <svg viewBox="0 0 80 80">
-          <rect x="8" y="8" width="64" height="64" />
-        </svg>
+      <div id="loader">
+        <div className="ls-particles ls-part-1" />
+        <div className="ls-particles ls-part-2" />
+        <div className="ls-particles ls-part-3" />
+        <div className="ls-particles ls-part-4" />
+        <div className="ls-particles ls-part-5" />
+        <div className="lightsaber ls-left ls-green" />
+        <div className="lightsaber ls-right ls-red" />
       </div>
     </div>
   );

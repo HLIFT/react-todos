@@ -44,7 +44,7 @@ export function App() {
       }
     });
 
-    setTimeout(() => setLoading(false), 1000);
+    setTimeout(() => setLoading(false), 2000);
   }, []);
 
   const remaining = Object.values(todos).filter(
@@ -136,7 +136,7 @@ export function App() {
         }));
       }
     });
-    setTimeout(() => setLoading(false), 200);
+    setLoading(false);
   };
 
   const handleClickOnDelete = (todo: OldFrontTodo) => {
@@ -163,7 +163,7 @@ export function App() {
         handleClickOnDelete(todo);
       }
     }
-    setTimeout(() => setLoading(false), 200);
+    setLoading(false);
   };
 
   const markAllAsRead = () => {
