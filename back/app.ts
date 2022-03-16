@@ -114,8 +114,6 @@ app.post('/api/todos', dataMiddleware, async (req: Request, res: Response) => {
 });
 
 app.put('/api/todos/:id', dataMiddleware, async (req: Request, res: Response) => {
-  console.log(req.params.id, req.body);
-
   const todo = await updateTodo(parseInt(req.params.id, 10), req.body)
     .catch((e) => {
       let result = {
