@@ -14,6 +14,7 @@ import {
 import {
   OldFrontTodo, FrontTodo, TodoList, Label, InputErrors,
 } from '../../back/commonTypes';
+import { Loader } from './Loader';
 
 export function App() {
   const getFreshTodo = () => ({
@@ -28,6 +29,7 @@ export function App() {
   const [todos, setTodos] = useState<TodoList>({});
   const [newTodo, setNewTodo] = useState<FrontTodo>(getFreshTodo);
   const [labels, setLabels] = useState<Label[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     getTodos().then((response) => {
@@ -41,6 +43,8 @@ export function App() {
         setLabels(response.labels);
       }
     });
+
+    setLoading(false);
   }, []);
 
   const remaining = Object.values(todos).filter(
@@ -94,6 +98,8 @@ export function App() {
       return;
     }
 
+    setLoading(true);
+
     if (newTodo.id) {
       updateTodo(newTodo).then((response) => {
         if (response.success) {
@@ -117,9 +123,11 @@ export function App() {
         }
       });
     }
+    setLoading(false);
   };
 
   const handleClickOnCompleted = (todo: OldFrontTodo) => {
+    setLoading(true);
     completeTodo(todo).then((response) => {
       if (response.success) {
         setTodos((currentTodos) => ({
@@ -128,9 +136,11 @@ export function App() {
         }));
       }
     });
+    setTimeout(() => setLoading(false), 200);
   };
 
   const handleClickOnDelete = (todo: OldFrontTodo) => {
+    setLoading(true);
     deleteTodo(todo).then((response) => {
       console.log(response.success);
       if (response.success) {
@@ -141,9 +151,11 @@ export function App() {
         });
       }
     });
+    setLoading(false);
   };
 
   const handleClickOnDeleteDone = () => {
+    setLoading(true);
     // eslint-disable-next-line guard-for-in,no-restricted-syntax
     for (const id in todos) {
       const todo = todos[id];
@@ -151,9 +163,11 @@ export function App() {
         handleClickOnDelete(todo);
       }
     }
+    setTimeout(() => setLoading(false), 200);
   };
 
   const markAllAsRead = () => {
+    setLoading(true);
     const currentTodosEntries = Object.entries(todos);
     const hasNotCompletedTodo = Boolean(
       currentTodosEntries.filter(([, todo]) => !todo.completed).length,
@@ -172,6 +186,7 @@ export function App() {
         }
       });
     }
+    setLoading(false);
   };
 
   return (
@@ -240,66 +255,69 @@ export function App() {
         <input id="toggle-all" type="checkbox" className="toggle-all" />
         {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events */}
         <label onClick={markAllAsRead}>Mark all as complete</label>
-        <ul className="todo-list">
-          {filter !== 'date'
-            ? Object.values(todos)
-              .filter((item) => {
-                switch (filter) {
-                  case 'todo':
-                    return !item.completed;
-                  case 'done':
-                    return item.completed;
-                  case 'all':
-                    return item;
-                  case 'search':
-                    return (
-                      item.title.includes(search)
-                      || (item.description ? item.description.includes(search) : null)
-                    );
-                  case 'noLabel':
-                    return !item.labelId;
-                  default:
-                    // eslint-disable-next-line no-case-declarations
-                    const label = labels.find(
-                      (element) => element.id === filter,
-                    );
-                    if (label) {
-                      return item.labelId && item.labelId === label.id;
-                    }
-                    return item;
-                }
-              })
-              .map((todo) => (
-                <Todo
-                  key={todo.id}
-                  todo={todo}
-                  handleClickOnCompleted={handleClickOnCompleted}
-                  handleClickOnDelete={handleClickOnDelete}
-                  getLabel={getLabel}
-                  handleClickOnEdit={handleOnEdit}
-                />
-              ))
-            : Object.values(todos)
-              .sort((a, b) => {
-                if ((a.dueDate && b.dueDate)) {
-                  return differenceInMilliseconds(a.dueDate, b.dueDate);
-                }
-                if (a.dueDate && !b.dueDate) {
-                  return -1;
-                }
-                return 1;
-              })
-              .map((todo) => (
-                <Todo
-                  key={todo.id}
-                  todo={todo}
-                  handleClickOnCompleted={handleClickOnCompleted}
-                  handleClickOnDelete={handleClickOnDelete}
-                  getLabel={getLabel}
-                  handleClickOnEdit={handleOnEdit}
-                />
-              ))}
-        </ul>
+        {loading ? <Loader /> : (
+          <ul className="todo-list">
+            {filter !== 'date'
+              ? Object.values(todos)
+                .filter((item) => {
+                  switch (filter) {
+                    case 'todo':
+                      return !item.completed;
+                    case 'done':
+                      return item.completed;
+                    case 'all':
+                      return item;
+                    case 'search':
+                      return (
+                        item.title.includes(search)
+                            || (item.description ? item.description.includes(search) : null)
+                      );
+                    case 'noLabel':
+                      return !item.labelId;
+                    default:
+                      // eslint-disable-next-line no-case-declarations
+                      const label = labels.find(
+                        (element) => element.id === filter,
+                      );
+                      if (label) {
+                        return item.labelId && item.labelId === label.id;
+                      }
+                      return item;
+                  }
+                })
+                .map((todo) => (
+                  <Todo
+                    key={todo.id}
+                    todo={todo}
+                    handleClickOnCompleted={handleClickOnCompleted}
+                    handleClickOnDelete={handleClickOnDelete}
+                    getLabel={getLabel}
+                    handleClickOnEdit={handleOnEdit}
+                  />
+                ))
+              : Object.values(todos)
+                .sort((a, b) => {
+                  if ((a.dueDate && b.dueDate)) {
+                    return differenceInMilliseconds(a.dueDate, b.dueDate);
+                  }
+                  if (a.dueDate && !b.dueDate) {
+                    return -1;
+                  }
+                  return 1;
+                })
+                .map((todo) => (
+                  <Todo
+                    key={todo.id}
+                    todo={todo}
+                    handleClickOnCompleted={handleClickOnCompleted}
+                    handleClickOnDelete={handleClickOnDelete}
+                    getLabel={getLabel}
+                    handleClickOnEdit={handleOnEdit}
+                  />
+                ))}
+          </ul>
+        ) }
+
       </div>
       <footer className="footer">
         <span className="todo-count">
