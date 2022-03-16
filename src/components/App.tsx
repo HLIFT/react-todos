@@ -44,7 +44,7 @@ export function App() {
       }
     });
 
-    setLoading(false);
+    setTimeout(() => setLoading(false), 1000);
   }, []);
 
   const remaining = Object.values(todos).filter(
