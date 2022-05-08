@@ -13,7 +13,7 @@ import { ApiTodoResponseData, CreatePayload, UpdatePayload } from './commonTypes
 
 const app = express();
 
-const port = process.env.PORT || 4000;
+const port = process.env.SERVER_PORT || 4000;
 
 const prisma = new PrismaClient();
 
