@@ -11,7 +11,9 @@ import {
 // eslint-disable-next-line import/extensions
 } from '../../back/commonTypes';
 
-const apiUrl = 'http://localhost:4000/api';
+const port = 4000;
+
+const apiUrl = `http://localhost:${port}/api`;
 
 export async function getTodos() {
   const { data } = await axios.get<ApiTodosResponseData>(`${apiUrl}/todos`);
