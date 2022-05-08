@@ -2,8 +2,8 @@
 
 ## 📄 Description
 
-Cette application permet de créer des todos avec un titre, une descritpion, une catégorie et une date. Nous pouvons mettre comme terminée chacune des tâches ou toutes en même temps.
-Nous pouvons filtrer celles-ci par date croissante, par catégorie ou par statut (A faire / en cours / terminée).
+Cette application permet de créer des todos avec un titre, une description, une catégorie et une date. Nous pouvons mettre comme terminée chacune des tâches ou toutes en même temps.
+Nous pouvons filtrer celles-ci par date croissante, par catégorie ou par statut (À faire/en cours/terminée).
 Nous pouvons aussi supprimer toutes les todos terminées.
 
 Le front est relié au back grâce à une API qui nous permet d'enregistrer les todos en base de données, de les modifier ou de les supprimer.
@@ -49,9 +49,11 @@ nodemon app.ts
 ```
 
 Le serveur tourne sur le port que vous avez précisé dans le fichier `.env`.
-Si vous n'avez pas précisé celui-ci il tournera sur le port `4000`.
+Si vous n'avez pas précisé celui-ci, il tournera sur le port `4000`.
 
 #### Lancement du front
+
+⚠️ Si vous avez modifié le port du serveur et que celui-ci n'est plus `4000` il faut aussi le changer dans le front dans `src/helpers/api.ts` à la ligne `14`.
 
 ```
 cd ..
